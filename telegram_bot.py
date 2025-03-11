@@ -11,6 +11,7 @@ from ollama import chat
 import asyncio
 from telegram.ext import filters, MessageHandler
 import sqlite3
+from src.face_analysis import *
 
 BOT_TOKEN = "8034032425:AAG2u988cGUs-V3BBAnq8SWaxwGiIQCmRss"
 conn = sqlite3.connect("users.db")
@@ -59,7 +60,7 @@ async def handle_photo_request(update, context):
     file_id = update.message.photo[-1].file_id
     # Convert image to embeddings
     image_base64 = await context.application.bot.get_file(file_id)
-    embeddings = convert_to_embeddings(image_base64)
+    embeddings = extract_embedding(image_base64)
     try:
         conn = sqlite3.connect("users.db")
         with conn:

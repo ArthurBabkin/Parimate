@@ -1,14 +1,16 @@
-from deepface import DeepFace
 import cv2
-import itertools
+import base64
+import numpy as np
+from deepface import DeepFace
+
+def convert_base64_to_np(img_b64):
+    return cv2.imdecode(np.frombuffer(base64.b64decode(img_b64), dtype=np.uint8), -1)
 
 def extract_embedding(image):
-    try:
-        embs = DeepFace.represent(image)
-    except ValueError as e:
-        return None
+    embs = DeepFace.represent(convert_base64_to_np(image))
 
-    assert len(embs) == 1, "There should be 1 face on the reference image"
+    if len(embs) != 1:
+        raise ValueError("There should be 1 face on the reference image")
 
     return embs[0]['embedding']
 
@@ -25,4 +27,3 @@ def check_face(image, reference):
         image, reference
     )
     return result['verified']
-
