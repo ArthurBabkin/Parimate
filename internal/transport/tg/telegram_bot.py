@@ -10,7 +10,7 @@ from internal.domain.service.service import ParimateSerive
 
 class ParimateBot:
     def __init__(self, cfg: DictConfig, service: ParimateSerive):
-        self.app = ApplicationBuilder().token(cfg.tg.token).build()
+        self.app = ApplicationBuilder().token(cfg.token).build()
         self.service = service
 
     async def handle_start(self, update: Update,

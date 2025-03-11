@@ -13,7 +13,7 @@ class App:
     def __init__(self, cfg: DictConfig):
         self.cfg = cfg
 
-        deepfake = DeepFake()
+        deepfake = DeepFake(self.cfg.deepfake)
 
         conn = get_connection(self.cfg.database.path)
         init_database(conn, self.cfg.database.path_init)
@@ -22,7 +22,7 @@ class App:
         user_photo_adapter = UserPhotoAdapter(conn)
         service = ParimateSerive(self.cfg, deepfake, user_adapter,
                                  user_photo_adapter)
-        self.bot = ParimateBot(self.cfg, service)
+        self.bot = ParimateBot(self.cfg.tg, service)
 
     def run(self):
         self.bot.run()
