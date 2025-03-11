@@ -1,0 +1,4 @@
+test_img
+__pycache__
+.env
+.DS_Store
