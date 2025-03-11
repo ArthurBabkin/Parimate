@@ -1,20 +1,34 @@
-from fastapi import APIRouter, UploadFile, File, Form
+import cv2
+import numpy as np
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from sqlalchemy.orm import Session
+from src.services.face_analysis import *
 
 router = APIRouter()
 
 @router.post('/upload_image')
 def upload_image(
-        img: UploadFile = File()
+    tg_id: int,
+    img: UploadFile = File(),
 ):
-    """upload image of the user
+    """Upload image of the user
 
     Args:
-        img (UploadFile, optional): _description_. Defaults to File().
+        img (UploadFile, optional): Image file from user. Defaults to File().
+        db (Session, optional): SQLAlchemy DB session from dependency.
     """
-    pass
+    emb = extract_embedding(
+        cv2.imdecode(np.frombuffer(img.file.read(), dtype=np.uint8), -1)
+        )
+    if emb is None:
+        raise HTTPException(401, "There is no face on the image")
+    return {'user_embedding': emb}
+
+
 
 @router.post('/get_analysis')
 def get_analysis(
+    tg_id: int,
     video: UploadFile = File(),
     description: str = Form(...),
     key_word: str = Form(...),

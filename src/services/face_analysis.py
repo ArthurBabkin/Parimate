@@ -1,7 +1,19 @@
 from deepface import DeepFace
 import cv2
+import itertools
 
-def check_face(image, reference, kwargs):
+def extract_embedding(image):
+    try:
+        embs = DeepFace.represent(image)
+    except ValueError as e:
+        return None
+
+    assert len(embs) == 1, "There should be 1 face on the reference image"
+
+    return embs[0]['embedding']
+
+
+def check_face(image, reference):
     """image - new photo
     reference - reference embedding/photo
 
@@ -10,13 +22,7 @@ def check_face(image, reference, kwargs):
         reference (np.array): reference embedding/photo
     """
     result = DeepFace.verify(
-        image, reference, **kwargs
+        image, reference
     )
     return result['verified']
 
-
-if __name__ == "__main__":
-    f = cv2.imread('./test_img/1.jpg')
-    ref = cv2.imread('./test_img/2.jpg')
-
-    print(check_face(f, ref))
