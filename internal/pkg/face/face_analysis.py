@@ -1,7 +1,9 @@
-import cv2
 import base64
+
+import cv2
 import numpy as np
 from deepface import DeepFace
+
 
 def convert_base64_to_np(img_b64):
     return cv2.imdecode(np.frombuffer(base64.b64decode(img_b64), dtype=np.uint8), -1)

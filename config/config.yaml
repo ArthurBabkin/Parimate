@@ -1,0 +1,5 @@
+database:
+  path: "users.db"
+  path_init: "migrations/init.sql"
+tg:
+  token: "8034032425:AAG2u988cGUs-V3BBAnq8SWaxwGiIQCmRss"
