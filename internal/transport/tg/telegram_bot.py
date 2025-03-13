@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import (ApplicationBuilder, CommandHandler, ContextTypes,
                           MessageHandler, filters)
 
-from internal.domain.service.service import ParimateSerive
+from internal.domain.service import ParimateSerive
 
 
 class ParimateBot:

@@ -6,4 +6,4 @@ test:
 	poetry run pytest -sv tests
 
 run:
-	poetry run python cmd/app/main.py
+	poetry run python cmd/app/main.py --config_path config/config.yaml

@@ -1,12 +1,10 @@
 from omegaconf import DictConfig
 
-from internal.adapter.database.sql.user import UserAdapter
-from internal.adapter.database.sql.user_photo import UserPhotoAdapter
-from internal.domain.deepfake.deepfake import DeepFake
-from internal.domain.service.service import ParimateSerive
-from internal.storage.database.sqlite3.connection import (get_connection,
-                                                          init_database)
-from internal.transport.tg.telegram_bot import ParimateBot
+from internal.adapter.database.sql import UserAdapter, UserPhotoAdapter
+from internal.domain.deepfake import DeepFake
+from internal.domain.service import ParimateSerive
+from internal.storage.database.sqlite3 import get_connection, init_database
+from internal.transport.tg import ParimateBot
 
 
 class App:

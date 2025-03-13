@@ -1,8 +1,7 @@
 from omegaconf import DictConfig
 
-from internal.adapter.database.sql.user import UserAdapter
-from internal.adapter.database.sql.user_photo import UserPhotoAdapter
-from internal.domain.deepfake.deepfake import DeepFake
+from internal.adapter.database.sql import UserAdapter, UserPhotoAdapter
+from internal.domain.deepfake import DeepFake
 
 
 class ParimateSerive:
