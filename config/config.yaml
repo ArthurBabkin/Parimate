@@ -4,6 +4,12 @@ database:
 tg:
   token: "8034032425:AAG2u988cGUs-V3BBAnq8SWaxwGiIQCmRss"
 deepfake:
-  audio_threshold: 0.5
-  original_threshold: 0.1
-  shape_predictor_path: "./internal/domain/deepfake/utils/shape_predictor/shape_predictor_68_face_landmarks.dat"
+  metadata:
+    audio_threshold: 0.5
+    original_threshold: 0.1
+  eye_detection:
+    shape_predictor_path: "./internal/domain/deepfake/utils/shape_predictor/shape_predictor_68_face_landmarks.dat"
+    radius_min_para: 4.5
+    radius_max_para: 2.0
+    threshold_scale_left: 1.2
+    threshold_scale_right: 1.2
