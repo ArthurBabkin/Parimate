@@ -1,0 +1,8 @@
+python-telegram-bot==13.7
+fastapi
+deepface
+requests
+speechkit
+python-dotenv
+protobuf==3.20.0
+ffmpeg

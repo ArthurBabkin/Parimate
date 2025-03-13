@@ -164,4 +164,7 @@ cython_debug/
 test_img
 tests/test_data
 .DS_Store
-outputs
+
+# Игнорируем виртуальное окружение
+.venv/
+venv/
