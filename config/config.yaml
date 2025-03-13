@@ -6,3 +6,4 @@ tg:
 deepfake:
   audio_threshold: 0.5
   original_threshold: 0.1
+  shape_predictor_path: "./internal/domain/deepfake/utils/shape_predictor/shape_predictor_68_face_landmarks.dat"

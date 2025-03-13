@@ -1,15 +1,36 @@
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 from exiftool import ExifToolHelper
 from omegaconf import DictConfig
+from PIL import Image
+
+from .utils.eye_iris_utils import (cornea_convex_hull, eye_detection,
+                                   process_aligned_image, segment_iris)
 
 
-class DeepFake:
+class DeepFakeMetadata:
+    """
+    Класс для проверки верификации метаданных в видео на
+    предмет редактирования.
+    """
+
     def __init__(self, cfg: DictConfig):
-        self.cfg = cfg
+        self.cfg = cfg.metadata
 
     def extract_metadata(self, file_path: str) -> Dict[str, Any]:
+        """
+        Извлечь метаданные из видео.
+        Args:
+            file_path (str): путь к видео.
+
+        Returns:
+            metadata (dict): словарь метаданных.
+        """
         try:
             with ExifToolHelper(common_args=["-G0", "-a", "-u", "-ee"]) as et:
                 metadata = et.get_metadata(file_path)[0]
@@ -18,6 +39,14 @@ class DeepFake:
             raise RuntimeError(f"Ошибка извлечения метаданных: {str(e)}")
 
     def parse_duration(self, duration_str: str) -> Optional[float]:
+        """
+        Спарсить длительность.
+        Args:
+            duration_str (str): длительность в строковом формате.
+
+        Returns:
+            Значение длительности в float формате.
+        """
         try:
             if isinstance(duration_str, (int, float)):
                 return float(duration_str)
@@ -35,6 +64,15 @@ class DeepFake:
 
     def _check_software(self, report: Dict[str, List],
                         metadata: Dict[str, Any]) -> None:
+        """
+        Проверить метаданные на наличие следов редактирования с помощью ПО.
+        Args:
+            report (dict): репорт для верификации видео.
+            metadata (dict): метаданные видео.
+
+        Returns:
+            Функция добавляет результат в report.
+        """
         check_name = "_check_software"
 
         editors = [
@@ -59,6 +97,15 @@ class DeepFake:
 
     def _check_time(self, report: Dict[str, List],
                     metadata: Dict[str, Any]) -> None:
+        """
+        Проверить метаданные на несовпадение длительности.
+        Args:
+            report (dict): репорт для верификации видео.
+            metadata (dict): метаданные видео.
+
+        Returns:
+            Функция добавляет результат в report.
+        """
         check_name = "_check_time"
 
         date_formats = [
@@ -94,6 +141,15 @@ class DeepFake:
 
     def _check_audio_duration(self, report: Dict[str, List],
                               metadata: Dict[str, Any]) -> None:
+        """
+        Проверить метаданные на несовпадение длительности для аудио.
+        Args:
+            report (dict): репорт для верификации видео.
+            metadata (dict): метаданные видео.
+
+        Returns:
+            Функция добавляет результат в report.
+        """
         check_name = "_check_audio_duration"
 
         duration_fields = ['Duration', 'MediaDuration',
@@ -119,6 +175,15 @@ class DeepFake:
 
     def _check_original_parameters(self, report: Dict[str, List],
                                    metadata: Dict[str, Any]) -> None:
+        """
+        Проверить метаданные на несовпадение оригинальных значений и текущих.
+        Args:
+            report (dict): репорт для верификации видео.
+            metadata (dict): метаданные видео.
+
+        Returns:
+            Функция добавляет результат в report.
+        """
         check_name = "_check_original_parameters"
 
         video_checks = {
@@ -143,6 +208,15 @@ class DeepFake:
 
     def _check_comment(self, report: Dict[str, List],
                        metadata: Dict[str, Any]) -> None:
+        """
+        Проверить комментарии на наличие следов редактирования.
+        Args:
+            report (dict): репорт для верификации видео.
+            metadata (dict): метаданные видео.
+
+        Returns:
+            Функция добавляет результат в report.
+        """
         check_name = "_check_comment"
 
         field = 'Comment'
@@ -153,6 +227,16 @@ class DeepFake:
 
     def _check_model_device(self, report: Dict[str, List],
                             metadata: Dict[str, Any]) -> None:
+        """
+        Проверить метаданные на несовпадение технический возможностей модели и
+        параметров видео.
+        Args:
+            report (dict): репорт для верификации видео.
+            metadata (dict): метаданные видео.
+
+        Returns:
+            Функция добавляет результат в report.
+        """
         check_name = "_check_model_device"
 
         models = {
@@ -176,6 +260,15 @@ class DeepFake:
 
     def analyze_metadata(self, metadata: Dict[str, Any]) \
             -> Dict[str, List[str]]:
+        """
+        Запустить все возможные проверки для видео и вернуть отчет с
+        результатом верификации.
+        Args:
+            metadata (dict): метаданные видео.
+
+        Returns:
+            report (dict): репорт для верификации видео.
+        """
         report = {}
 
         check_functions = [self._check_software, self._check_time,
@@ -191,11 +284,177 @@ class DeepFake:
         return report
 
     def analyze_video_metadata(self, file_path: str) -> Dict[str, Any]:
+        """
+        Верифицировать видео по метаданным и вернуть отчет с
+        результатом верификации.
+        Args:
+            file_path (str): путь к видео.
+
+        Returns:
+            report (dict): репорт для верификации видео.
+        """
         try:
             metadata = self.extract_metadata(file_path)
-            return self.analyze_metadata(metadata)
+            report = self.analyze_metadata(metadata)
+            return report
         except Exception as e:
             return {'error': str(e)}
+
+
+class DeepFakeEyeIris:
+    """
+    Класс для верификации видео с помощью различий бликов в глазах.
+    """
+
+    def __init__(self, cfg: DictConfig):
+        self.cfg = cfg.eye_detection
+
+    def detection(self, image_path: str,
+                  shrink: bool = True, shrink_size: int = 2,
+                  output: str = "./outputs"):
+
+        try:
+            data_name = os.path.splitext(os.path.basename(image_path))[0]
+        except:
+            return None
+
+        try:
+            left_eye_image, \
+            right_eye_image, \
+            new_eyes_position_list, \
+            number_face, \
+            double_eye_img, \
+            double_eye_position_difference_list = \
+                eye_detection(image_path, self.cfg.shape_predictor_path)
+
+        except:
+            return "eye_detection error"
+
+        if number_face != 1:
+            return "number_face error"
+
+        try:
+            left_cornea, \
+            right_cornea, \
+            left_cornea_matrix, \
+            right_cornea_matrix = \
+                cornea_convex_hull(left_eye_image, right_eye_image,
+                                   new_eyes_position_list)
+        except:
+            return "cornea_convex_hull error"
+
+        try:
+            img_left, \
+            iris_left, \
+            l_iris, \
+            l_iris_center, \
+            l_radius, \
+            l_eye_center, \
+            l_highlights, \
+            l_num_refl, \
+            l_valid = \
+                segment_iris(left_eye_image, left_cornea_matrix.astype(bool),
+                             self.cfg.radius_min_para,
+                             self.cfg.radius_max_para)
+
+            img_right, \
+            iris_right, \
+            r_iris, \
+            r_iris_center, \
+            r_radius, \
+            r_eye_center, \
+            r_highlights, \
+            r_num_refl, \
+            r_valid = \
+                segment_iris(right_eye_image, right_cornea_matrix.astype(bool),
+                             self.cfg.radius_min_para,
+                             self.cfg.radius_max_para)
+
+            if l_num_refl == 0 and r_num_refl == 0:
+                return "l_num_refl == 0 and r_num_refl == 0 error"
+
+        except Exception as e:
+            return "segment_iris error"
+
+        try:
+            double_eye_img_ori = double_eye_img.copy()
+
+            new_left_eye = l_iris_center + double_eye_position_difference_list[
+                0]
+            new_right_eye = r_iris_center + \
+                            double_eye_position_difference_list[1]
+            cv2.circle(double_eye_img, (new_left_eye[0], new_left_eye[1]),
+                       l_radius, (0, 0, 255), 2)  # left
+            cv2.circle(double_eye_img, (new_right_eye[0], new_right_eye[1]),
+                       r_radius, (0, 0, 255), 2)  # right
+
+        except:
+            return "circle error"
+
+        try:
+            iris_left_resize, \
+            iris_right_resize, \
+            left_recolor, \
+            right_recolor, \
+            left_recolor_resize, \
+            right_recolor_resize, \
+            IOU_score, \
+            double_eye_img_modified = \
+                process_aligned_image(iris_left, iris_right, l_iris, r_iris,
+                                      l_highlights, r_highlights,
+                                      left_eye_image,
+                                      right_eye_image,
+                                      double_eye_img,
+                                      double_eye_position_difference_list,
+                                      reduce=shrink,
+                                      reduce_size=shrink_size,
+                                      threshold_scale_left=
+                                      self.cfg.threshold_scale_left,
+                                      threshold_scale_right=
+                                      self.cfg.threshold_scale_right)
+
+        except:
+            return "process_aligned_image error"
+
+        try:
+            ori_image = cv2.imread(image_path)
+
+            ori_image = cv2.resize(ori_image, (double_eye_img_ori.shape[1],
+                                               double_eye_img_ori.shape[1]))
+            ori_image = cv2.cvtColor(ori_image, cv2.COLOR_BGR2RGB)
+
+            space = np.full((2, double_eye_img_ori.shape[1], 3), 255,
+                            dtype=np.uint8)
+            imgs_comb = np.vstack((ori_image, space, double_eye_img_ori, space,
+                                   double_eye_img_modified))
+            imgs_comb = Image.fromarray(imgs_comb)
+
+            plt.imshow(imgs_comb)
+            plt.xticks([])
+            plt.yticks([])
+            plt.xlabel("IoU:{}".format(f'{IOU_score:.4f}'))
+            os.makedirs(output, exist_ok=True)
+            plt.savefig('{}/{}_iris_final.png'.format(output, data_name),
+                        dpi=800, bbox_inches='tight',
+                        pad_inches=0)
+
+            plt.show()
+            print("IOU:{}".format(f'{IOU_score:.4f}'))
+            print("The result is saved in {}/{}_iris_final.png".format(output,
+                                                                       data_name))
+        except:
+            return "savefig error"
+
+        return IOU_score
+
+
+class DeepFake(DeepFakeMetadata, DeepFakeEyeIris):
+    """
+    Класс объеденяющий все возможные верификации видео.
+    """
+
+    def __init__(self, cfg: DictConfig):
+        super().__init__(cfg)
 
     def check_video(self, file_path: str) -> bool:
         report = self.analyze_video_metadata(file_path)

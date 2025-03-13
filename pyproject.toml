@@ -15,6 +15,12 @@ omegaconf = "^2.3.0"
 urllib3 = "^2.3.0"
 tensorflow = "^2.18.0"
 deepface = "^0.0.93"
+scikit-image = "^0.25.2"
+cmake = "^3.31.6"
+pyproject-hooks = "1.2.0"
+dlib = "^19.24.6"
+matplotlib = "^3.10.1"
+argparse = "^1.4.0"
 
 
 [build-system]
