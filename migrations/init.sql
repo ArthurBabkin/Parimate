@@ -7,3 +7,10 @@ CREATE TABLE IF NOT EXISTS users (
     tg_id INTEGER UNIQUE NOT NULL,
     embedding TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS user_photos (
+    id INTEGER,
+    ufile_id TEXT,
+    embedding VECTOR
+);
+
