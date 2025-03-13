@@ -1,9 +1,9 @@
 import math
+from typing import List, Tuple
 
 import cv2
 import numpy as np
 import skimage.filters as filter
-from typing import Tuple, List
 
 
 def matrix_reduce(iris_left_matrix: np.ndarray,

@@ -1,10 +1,11 @@
+from typing import Tuple
+
 import cv2
 import numpy as np
 from scipy.ndimage import binary_dilation, binary_erosion
 from skimage import exposure
 from skimage.feature import canny
 from skimage.transform import hough_circle, hough_circle_peaks
-from typing import Tuple
 
 
 def extract_reflection(img: np.ndarray, mask: np.ndarray) \
