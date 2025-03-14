@@ -1,4 +1,5 @@
 import dlib
+import numpy as np
 import pytest
 from omegaconf import OmegaConf
 
@@ -50,7 +51,7 @@ class TestDeepFakeNN:
         frames = extract_frames_from_video(self.video_paths[0],
                                            self.cfg.deepfake.step)
         t = self.df.analyze_video(frames)
-        assert isinstance(t, list)
+        assert isinstance(t, np.ndarray)
 
 
 class TestDeepFake:

@@ -3,6 +3,7 @@ from typing import List
 import cv2
 import numpy as np
 from deepface import DeepFace
+import dlib
 
 
 def extract_frames_from_video(video_path: str, step: int,
@@ -39,20 +40,16 @@ def extract_frames_from_video(video_path: str, step: int,
 
     vid.release()
 
-    print(len(frames))
     frames = check_laplacian(frames)
-    print(len(frames))
     frames = check_face(frames)
-    print(len(frames))
     return frames
 
 
-def check_laplacian(frames: List[np.ndarray]) -> List[np.ndarray]:
+def check_laplacian(frames: List[np.ndarray], p: float = 0.3) \
+        -> List[np.ndarray]:
     variance_laplacians = [
         cv2.Laplacian(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY),
                       cv2.CV_64F).var() for frame in frames]
-
-    p = 0.3
 
     frame_with_laplacian = list(zip(variance_laplacians, frames))
     frame_with_laplacian.sort(reverse=True)
@@ -62,17 +59,19 @@ def check_laplacian(frames: List[np.ndarray]) -> List[np.ndarray]:
 
 
 def check_face(frames: List[np.ndarray]) -> List[np.ndarray]:
+    detector = dlib.get_frontal_face_detector()
     analyze_frames = []
     for frame in frames:
         try:
-            res = DeepFace.analyze(img_path=frame, actions=[])
-        except:
-            res = []
-        analyze_frames.append(res)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            face_rectangles = detector(gray)
+        except ValueError as _:
+            face_rectangles = [[]]
+        analyze_frames.append(face_rectangles)
 
     frames_with_face = []
     for i, frame in enumerate(frames):
-        if len(analyze_frames[i]):
+        if analyze_frames[i]:
             frames_with_face.append(frame)
 
     return frames_with_face

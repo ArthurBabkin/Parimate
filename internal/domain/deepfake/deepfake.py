@@ -3,13 +3,14 @@ from typing import Any, Dict, List, Optional
 
 import cv2
 import numpy as np
-from deepface import DeepFace
 from exiftool import ExifToolHelper
 from omegaconf import DictConfig
+import tensorflow as tf
 
 from ..utils import extract_frames_from_video
 from .utils.eye_iris_utils import (cornea_convex_hull, eye_detection,
                                    process_aligned_image, segment_iris)
+from .utils.mesonet import Meso4
 
 
 class DeepFakeMetadata:
@@ -422,37 +423,47 @@ class DeepFakeEyeIris:
 
 class DeepFakeNN:
     def __init__(self, cfg: DictConfig):
-        self.cfg = cfg.nn_detection
+        self.model = Meso4()
+        self.model.load(cfg.nn_detection.mesonet_path)
 
-    def analyze_frame(self, frame: str | np.ndarray):
-        result = DeepFace.analyze(img_path=frame,
-                                  actions=["emotion"],
-                                  detector_backend=
-                                  self.cfg.detector_backend)
+    def transform_frames(self, frames: List[np.ndarray] | np.ndarray):
+        if not isinstance(frames, list):
+            frames = [frames]
+
+        for i in range(len(frames)):
+            frame = frames[i]
+            frame = tf.convert_to_tensor(frame)
+            resized_image = tf.image.resize(frame,
+                                            [256, 256])
+            rescaled_image = resized_image / 255.0
+            frames[i] = rescaled_image
+
+        return tf.convert_to_tensor(frames)
+
+    def analyze_frame(self, frame: str | np.ndarray) -> np.ndarray:
+        frames = self.transform_frames(frame)
+        result = self.model.predict(frames)
         return result
 
-    def analyze_video(self, frames: List[np.ndarray]):
-        results = []
-
-        for frame in frames:
-            result = self.analyze_frame(frame)
-            if result:
-                results.append(result)
-
+    def analyze_video(self, frames: List[np.ndarray]) -> np.ndarray:
+        frames = self.transform_frames(frames)
+        results = self.model.predict(frames)
         return results
 
 
-class DeepFake(DeepFakeMetadata, DeepFakeEyeIris, DeepFakeNN):
+class DeepFake:
     """
     Класс объеденяющий все возможные верификации видео.
     """
 
     def __init__(self, cfg: DictConfig):
-        super().__init__(cfg)
-        self.step = cfg.step
+        self.cfg = cfg
+        self.df1 = DeepFakeMetadata(cfg)
+        self.df2 = DeepFakeEyeIris(cfg)
+        self.df3 = DeepFakeNN(cfg)
 
-    def check_video(self, video_path: str) -> bool:
-        report = self.analyze_video_metadata(video_path)
+    def check_video(self, video_path: str) -> str:
+        report = self.df1.analyze_video_metadata(video_path)
 
         if 'error' in report:
             return 'error'
@@ -461,10 +472,21 @@ class DeepFake(DeepFakeMetadata, DeepFakeEyeIris, DeepFakeNN):
             if len(check_list):
                 return 'fake'
 
-        frames = extract_frames_from_video(video_path, step=self.step)
+        frames = extract_frames_from_video(video_path, step=self.cfg.step)
+        if len(frames) == 0:
+            return 'face not found'
 
-        for frame in frames:
-            if not self.analyze_eye_iris(frame):
+        iou_m = [self.df2.analyze_eye_iris(frame) for frame in frames]
+        iou_m = list(filter(lambda x: isinstance(x, int), iou_m))
+        if len(iou_m):
+            iou_m = sum(iou_m) / len(iou_m)
+
+            if iou_m < 0.5:
                 return 'fake'
+
+        deepfake_conf = self.df3.analyze_video(frames)
+
+        if sum(deepfake_conf) / len(deepfake_conf) < self.cfg.nn_detection.threshold_conf:
+            return 'fake'
 
         return 'correct'
