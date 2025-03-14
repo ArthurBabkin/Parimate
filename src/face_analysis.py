@@ -1,3 +1,5 @@
+import base64
+import cv2
 import numpy as np
 from deepface import DeepFace
 
@@ -14,6 +16,12 @@ class FaceAnalysis:
         if len(embeddings) != 1:
             raise ValueError("There should be exactly one face in the reference image.")
         return embeddings[0]['embedding']
+    
+    def extract_embedding_b64(self, image: str) -> np.ndarray:
+        """
+        Converts a base64-encoded image to a NumPy array and extracts its face embedding.
+        """
+        return self.extract_embedding(convert_base64_to_np(image))
 
     def verify_face(self, image: np.ndarray, reference: np.ndarray) -> bool:
         """Verifies if two face images belong to the same person."""
@@ -22,3 +30,8 @@ class FaceAnalysis:
         )
         return result.get('verified', False)
 
+def convert_base64_to_np(img_b64: str) -> np.ndarray:
+    """
+    Converts a base64-encoded image string into a NumPy array.
+    """
+    return cv2.imdecode(np.frombuffer(base64.b64decode(img_b64), dtype=np.uint8), -1)
