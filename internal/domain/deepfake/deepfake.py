@@ -7,9 +7,9 @@ from deepface import DeepFace
 from exiftool import ExifToolHelper
 from omegaconf import DictConfig
 
+from ..utils import extract_frames_from_video
 from .utils.eye_iris_utils import (cornea_convex_hull, eye_detection,
                                    process_aligned_image, segment_iris)
-from ..utils import extract_frames_from_video
 
 
 class DeepFakeMetadata:
@@ -431,9 +431,7 @@ class DeepFakeNN:
                                   self.cfg.detector_backend)
         return result
 
-    def analyze_video(self, video_path: str, frame_interval: int):
-        frames = extract_frames_from_video(video_path, step=frame_interval)
-
+    def analyze_video(self, frames: List[np.ndarray]):
         results = []
 
         for frame in frames:

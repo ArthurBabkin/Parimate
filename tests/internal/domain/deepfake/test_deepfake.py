@@ -2,8 +2,9 @@ import dlib
 import pytest
 from omegaconf import OmegaConf
 
-from internal.domain.deepfake import DeepFakeEyeIris, DeepFakeMetadata, \
-    DeepFakeNN
+from internal.domain.deepfake import (DeepFake, DeepFakeEyeIris,
+                                      DeepFakeMetadata, DeepFakeNN)
+from internal.domain.utils.video_prepare import extract_frames_from_video
 
 CONFIG_PATH = "tests/config/config.yaml"
 
@@ -41,9 +42,24 @@ class TestDeepFakeNN:
     @pytest.fixture(autouse=True)
     def setup(self):
         cfg = OmegaConf.load(CONFIG_PATH)
+        self.cfg = cfg
         self.df = DeepFakeNN(cfg.deepfake)
         self.video_paths = ["tests/test_data/video1.mp4"]
 
     def test_analyze_video(self):
-        t = self.df.analyze_video(self.video_paths[0], frame_interval=10)
+        frames = extract_frames_from_video(self.video_paths[0],
+                                           self.cfg.deepfake.step)
+        t = self.df.analyze_video(frames)
         assert isinstance(t, list)
+
+
+class TestDeepFake:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        cfg = OmegaConf.load(CONFIG_PATH)
+        self.cfg = cfg
+        self.df = DeepFake(cfg.deepfake)
+        self.video_paths = ["tests/test_data/video1.mp4"]
+
+    def test_check_video(self):
+        assert self.df.check_video(self.video_paths[0])

@@ -2,6 +2,7 @@ from typing import List
 
 import cv2
 import numpy as np
+from deepface import DeepFace
 
 
 def extract_frames_from_video(video_path: str, step: int,
@@ -38,7 +39,11 @@ def extract_frames_from_video(video_path: str, step: int,
 
     vid.release()
 
+    print(len(frames))
     frames = check_laplacian(frames)
+    print(len(frames))
+    frames = check_face(frames)
+    print(len(frames))
     return frames
 
 
@@ -54,3 +59,20 @@ def check_laplacian(frames: List[np.ndarray]) -> List[np.ndarray]:
 
     return [t[1] for t in
             frame_with_laplacian[:int(p * len(frame_with_laplacian))]]
+
+
+def check_face(frames: List[np.ndarray]) -> List[np.ndarray]:
+    analyze_frames = []
+    for frame in frames:
+        try:
+            res = DeepFace.analyze(img_path=frame, actions=[])
+        except:
+            res = []
+        analyze_frames.append(res)
+
+    frames_with_face = []
+    for i, frame in enumerate(frames):
+        if len(analyze_frames[i]):
+            frames_with_face.append(frame)
+
+    return frames_with_face

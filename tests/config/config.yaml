@@ -16,4 +16,4 @@ deepfake:
     threshold_iou: 0.6
   nn_detection:
     detector_backend: "opencv"
-  step: 5
+  step: 1
