@@ -37,4 +37,20 @@ def extract_frames_from_video(video_path: str, step: int,
         frame_idx += 1
 
     vid.release()
+
+    frames = check_laplacian(frames)
     return frames
+
+
+def check_laplacian(frames: List[np.ndarray]) -> List[np.ndarray]:
+    variance_laplacians = [
+        cv2.Laplacian(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY),
+                      cv2.CV_64F).var() for frame in frames]
+
+    p = 0.3
+
+    frame_with_laplacian = list(zip(variance_laplacians, frames))
+    frame_with_laplacian.sort(reverse=True)
+
+    return [t[1] for t in
+            frame_with_laplacian[:int(p * len(frame_with_laplacian))]]

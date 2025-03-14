@@ -445,6 +445,7 @@ class DeepFake(DeepFakeMetadata, DeepFakeEyeIris, DeepFakeNN):
 
     def __init__(self, cfg: DictConfig):
         super().__init__(cfg)
+        self.step = cfg.step
 
     def check_video(self, video_path: str) -> bool:
         report = self.analyze_video_metadata(video_path)
@@ -456,7 +457,7 @@ class DeepFake(DeepFakeMetadata, DeepFakeEyeIris, DeepFakeNN):
             if len(check_list):
                 return 'fake'
 
-        frames = extract_frames_from_video(video_path, step=10)
+        frames = extract_frames_from_video(video_path, step=self.step)
 
         for frame in frames:
             if not self.analyze_eye_iris(frame):
