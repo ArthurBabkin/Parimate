@@ -3,9 +3,9 @@ from typing import Any, Dict, List, Optional
 
 import cv2
 import numpy as np
+import tensorflow as tf
 from exiftool import ExifToolHelper
 from omegaconf import DictConfig
-import tensorflow as tf
 
 from ..utils import extract_frames_from_video
 from .utils.eye_iris_utils import (cornea_convex_hull, eye_detection,

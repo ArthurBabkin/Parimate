@@ -10,6 +10,7 @@ import requests
 import torch
 from open_clip import tokenizer
 from PIL import Image
+
 from internal.domain.audio.speech_model.model import YandexSpeechKit
 
 

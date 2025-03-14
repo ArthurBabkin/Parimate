@@ -1,9 +1,9 @@
 from typing import List
 
 import cv2
+import dlib
 import numpy as np
 from deepface import DeepFace
-import dlib
 
 
 def extract_frames_from_video(video_path: str, step: int,
