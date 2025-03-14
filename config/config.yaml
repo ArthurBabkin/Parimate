@@ -17,3 +17,6 @@ deepfake:
   nn_detection:
     detector_backend: "opencv"
   step: 5
+face_analysis:
+  detector: "opencv"
+  model_name: "Facenet"
