@@ -21,6 +21,7 @@ pyproject-hooks = "1.2.0"
 dlib = "^19.24.6"
 matplotlib = "^3.10.1"
 argparse = "^1.4.0"
+tf-keras = "^2.19.0"
 
 
 [build-system]

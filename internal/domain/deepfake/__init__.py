@@ -1,1 +1,1 @@
-from .deepfake import DeepFake
+from .deepfake import DeepFake, DeepFakeMetadata, DeepFakeEyeIris, DeepFakeNN

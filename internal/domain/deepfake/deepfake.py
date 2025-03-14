@@ -1,16 +1,15 @@
-import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
+from deepface import DeepFace
 from exiftool import ExifToolHelper
 from omegaconf import DictConfig
-from PIL import Image
 
 from .utils.eye_iris_utils import (cornea_convex_hull, eye_detection,
                                    process_aligned_image, segment_iris)
+from ..utils import extract_frames_from_video
 
 
 class DeepFakeMetadata:
@@ -309,14 +308,8 @@ class DeepFakeEyeIris:
     def __init__(self, cfg: DictConfig):
         self.cfg = cfg.eye_detection
 
-    def detection(self, image_path: str,
-                  shrink: bool = True, shrink_size: int = 2,
-                  output: str = "./outputs"):
-
-        try:
-            data_name = os.path.splitext(os.path.basename(image_path))[0]
-        except:
-            return None
+    def analyze_eye_iris(self, frame: np.ndarray,
+                         shrink: bool = True, shrink_size: int = 2):
 
         try:
             left_eye_image, \
@@ -325,7 +318,7 @@ class DeepFakeEyeIris:
             number_face, \
             double_eye_img, \
             double_eye_position_difference_list = \
-                eye_detection(image_path, self.cfg.shape_predictor_path)
+                eye_detection(frame, self.cfg.shape_predictor_path)
 
         except:
             return "eye_detection error"
@@ -416,39 +409,36 @@ class DeepFakeEyeIris:
         except:
             return "process_aligned_image error"
 
-        try:
-            ori_image = cv2.imread(image_path)
+        print("IOU:{}".format(f'{IOU_score:.4f}'))
 
-            ori_image = cv2.resize(ori_image, (double_eye_img_ori.shape[1],
-                                               double_eye_img_ori.shape[1]))
-            ori_image = cv2.cvtColor(ori_image, cv2.COLOR_BGR2RGB)
-
-            space = np.full((2, double_eye_img_ori.shape[1], 3), 255,
-                            dtype=np.uint8)
-            imgs_comb = np.vstack((ori_image, space, double_eye_img_ori, space,
-                                   double_eye_img_modified))
-            imgs_comb = Image.fromarray(imgs_comb)
-
-            plt.imshow(imgs_comb)
-            plt.xticks([])
-            plt.yticks([])
-            plt.xlabel("IoU:{}".format(f'{IOU_score:.4f}'))
-            os.makedirs(output, exist_ok=True)
-            plt.savefig('{}/{}_iris_final.png'.format(output, data_name),
-                        dpi=800, bbox_inches='tight',
-                        pad_inches=0)
-
-            plt.show()
-            print("IOU:{}".format(f'{IOU_score:.4f}'))
-            print("The result is saved in {}/{}_iris_final.png".format(output,
-                                                                       data_name))
-        except:
-            return "savefig error"
-
-        return IOU_score
+        return IOU_score > self.cfg.threshold_iou
 
 
-class DeepFake(DeepFakeMetadata, DeepFakeEyeIris):
+class DeepFakeNN:
+    def __init__(self, cfg: DictConfig):
+        self.cfg = cfg.nn_detection
+
+    def analyze_frame(self, frame: str | np.ndarray):
+        result = DeepFace.analyze(img_path=frame,
+                                  actions=["emotion"],
+                                  detector_backend=
+                                  self.cfg.detector_backend)
+        return result
+
+    def analyze_video(self, video_path: str, frame_interval: int):
+        frames = extract_frames_from_video(video_path, step=frame_interval)
+
+        results = []
+
+        for frame in frames:
+            result = self.analyze_frame(frame)
+            if result:
+                results.append(result)
+
+        return results
+
+
+class DeepFake(DeepFakeMetadata, DeepFakeEyeIris, DeepFakeNN):
     """
     Класс объеденяющий все возможные верификации видео.
     """
@@ -456,12 +446,20 @@ class DeepFake(DeepFakeMetadata, DeepFakeEyeIris):
     def __init__(self, cfg: DictConfig):
         super().__init__(cfg)
 
-    def check_video(self, file_path: str) -> bool:
-        report = self.analyze_video_metadata(file_path)
+    def check_video(self, video_path: str) -> bool:
+        report = self.analyze_video_metadata(video_path)
 
         if 'error' in report:
-            return True
+            return 'error'
 
         for check_func, check_list in report.items():
             if len(check_list):
-                return False
+                return 'fake'
+
+        frames = extract_frames_from_video(video_path, step=10)
+
+        for frame in frames:
+            if not self.analyze_eye_iris(frame):
+                return 'fake'
+
+        return 'correct'

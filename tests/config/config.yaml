@@ -13,3 +13,6 @@ deepfake:
     radius_max_para: 2.0
     threshold_scale_left: 1.2
     threshold_scale_right: 1.2
+    threshold_iou: 0.6
+  nn_detection:
+    detector_backend: "opencv"

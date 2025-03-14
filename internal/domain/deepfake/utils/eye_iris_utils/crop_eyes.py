@@ -83,7 +83,7 @@ def drawPoints(faceLandmarks, startpoint: int, endpoint: int) -> np.ndarray:
     return points
 
 
-def eye_detection(data: str, predictor_path: str) \
+def eye_detection(img: np.ndarray, predictor_path: str) \
         -> Tuple[np.ndarray, np.ndarray, List, int, np.ndarray, np.ndarray]:
     """
     Возвращает снимок лица для детектирования глаз.
@@ -104,7 +104,6 @@ def eye_detection(data: str, predictor_path: str) \
     """
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(predictor_path)
-    img = dlib.load_rgb_image(data)
     # Попросите детектор найти ограничивающие рамки каждой грани.
     # Цифра 1 во втором аргументе указывает на то, что мы должны выполнить
     # повторную выборку изображения 1 раз. Этот увеличит изображение и

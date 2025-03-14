@@ -2327,6 +2327,20 @@ files = [
 tests = ["pytest", "pytest-cov"]
 
 [[package]]
+name = "tf-keras"
+version = "2.19.0"
+description = "Deep learning for humans."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "tf_keras-2.19.0-py3-none-any.whl", hash = "sha256:4f339e800987b39d1548a8c76a7b33b6801a97ec7fcd89c299ec29741f7890bd"},
+    {file = "tf_keras-2.19.0.tar.gz", hash = "sha256:b09a407d87a4571ce1e8ca985cfc68483e3d63b2518a5d79a97ad92cb64dbe9c"},
+]
+
+[package.dependencies]
+tensorflow = ">=2.19,<2.20"
+
+[[package]]
 name = "tifffile"
 version = "2025.2.18"
 description = "Read and write TIFF files"
@@ -2530,4 +2544,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "534c7cf327d9bef79e4e77f77ba66d8df05bcc77ef4527ce86e2353720f21297"
+content-hash = "f4c26c89c753e8f2aef8443dc666745ac1d00dd87db4429eceb4c2e373f56cc1"
