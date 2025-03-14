@@ -72,8 +72,11 @@ class YandexSpeechKit:
         Returns:
             dict: Словарь с результатами распознавания.
         """
-        # Шаг 1: Проверка формата аудио
-        format_name = AudioProcessor.validate_audio_format(audio_file_path)
+        # Сохраняем оригинальный путь к файлу
+        original_audio_path = audio_file_path
+        
+        # Шаг 1: Проверка формата аудио и конвертация при необходимости
+        format_name, audio_file_path = AudioProcessor.validate_audio_format(audio_file_path)
         
         # Шаг 2: Проверка длительности аудио
         duration = AudioProcessor.get_audio_duration(audio_file_path)
@@ -110,15 +113,30 @@ class YandexSpeechKit:
             # Очищаем временные файлы
             if os.path.exists(processed_audio_path):
                 os.remove(processed_audio_path)
+            
+            # Если был создан временный файл при конвертации, тоже удаляем его
+            if audio_file_path != processed_audio_path and audio_file_path != original_audio_path:
+                if os.path.exists(audio_file_path):
+                    os.remove(audio_file_path)
 
 
 # Пример использования
 if __name__ == "__main__":
-    # Инициализация модели распознавания речи
+    # Инициализация объекта класса
     speech_model = YandexSpeechKit()
     
-    # Пример обработки аудиофайла
     try:
-        result = speech_model.process_audio("test_audio.ogg")
+        # Используем абсолютный путь к файлу в директории speech_model
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        audio_file_path = os.path.join(script_dir, "1.mp3")
+        
+        # Проверяем существование файла перед обработкой
+        if not os.path.exists(audio_file_path):
+            print(f"Ошибка: Файл {audio_file_path} не найден")
+        else:
+            print(f"Обрабатываем файл: {audio_file_path}")
+            
+            result = speech_model.process_audio(audio_file_path)
+            print("Результат распознавания:", result)
     except Exception as e:
         print(f"Ошибка: {e}")
