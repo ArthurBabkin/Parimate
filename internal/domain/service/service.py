@@ -4,14 +4,19 @@ from omegaconf import DictConfig
 
 from internal.adapter.database.sql import UserAdapter, UserPhotoAdapter
 from internal.domain.deepfake import DeepFake
+from internal.domain.audio.pipeline import SpeechValidator
 from internal.domain.face_analysis import FaceAnalysis
+from internal.domain.audio.video_description_matching import VideoDescriptionMatcher
 
 class ParimateSerive:
-    def __init__(self, cfg: DictConfig, df: DeepFake,
+    def __init__(self, cfg: DictConfig, df: DeepFake, 
+                 sv: SpeechValidator, vd: VideoDescriptionMatcher,
                  user_adapter: UserAdapter,
                  user_photo_adapter: UserPhotoAdapter):
         self.cfg = cfg
         self.df = df
+        self.sv = sv
+        self.vd = vd
         self.user_adapter = user_adapter
         self.user_photo_adapter = user_photo_adapter
         self.tasks = []
@@ -33,8 +38,16 @@ class ParimateSerive:
         
         return True
     
-    def done_task(self, user_id: int, video_path: str):
+    def done_task(self, user_id: int, task_name: str, video_path: str):
+        # Check metadata
         v = self._verify_video_metadata(video_path)
+
+        # Check audio for key word
+        task = [t for t in self.tasks if t["name"] == task_name][0]
+        audio_check = self.sv.validate_pronunciation(video_path, task["phrase"])
+
+        # Check video for actions or places
+        video_check = self.vd.verify_description(video_path, task["description"])
 
         os.remove(video_path)
 
