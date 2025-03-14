@@ -481,7 +481,7 @@ class DeepFake:
         if len(iou_m):
             iou_m = sum(iou_m) / len(iou_m)
 
-            if iou_m < 0.5:
+            if iou_m < 0.2:
                 return 'fake'
 
         deepfake_conf = self.df3.analyze_video(frames)
