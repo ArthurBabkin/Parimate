@@ -77,14 +77,7 @@ class NLP_analysis:
             
             if self.is_within_fuzzywuzzy_score(target_word, words[i]) and self.is_within_jaccard_score(target_word, words[i]):
                 matches[i] = True
-            
-
-        print("РОНАЛДУУУ")
-        for i in range(len(words)):
-            if matches[i]:
-                print(words[i])
-                print(self.get_jaccard_similarity(target_word, words[i]))
-
+                
         if True in matches:
             return True
         
