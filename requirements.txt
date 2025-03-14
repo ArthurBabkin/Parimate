@@ -9,3 +9,8 @@ ffmpeg
 Levenshtein>=0.12.2
 scikit-learn>=0.24.2
 fuzzywuzzy>=0.18.0
+numpy
+torch
+open_clip_torch
+Pillow
+opencv-python
