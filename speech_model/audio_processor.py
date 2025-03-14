@@ -8,12 +8,11 @@ class AudioProcessor:
     """
     
     # Поддерживаемые форматы аудио
-    SUPPORTED_FORMATS = {'lpcm', 'mp3', 'oggopus'}
+    SUPPORTED_FORMATS = {'lpcm', 'oggopus'}
     
     # Сопоставление расширений файлов с форматами Yandex SpeechKit
     FORMAT_MAPPING = {
         'wav': 'lpcm',
-        'mp3': 'mp3',
         'ogg': 'oggopus',
         'opus': 'oggopus',
         'lpcm': 'lpcm'
@@ -22,30 +21,81 @@ class AudioProcessor:
     # Сопоставление форматов Yandex с форматами FFmpeg
     FFMPEG_FORMAT_MAPPING = {
         'lpcm': 'wav',
-        'mp3': 'mp3',
         'oggopus': 'opus'
     }
+    
+    # Предпочтительный формат для конвертации (по умолчанию)
+    DEFAULT_TARGET_FORMAT = 'lpcm'
     
     @classmethod
     def validate_audio_format(cls, audio_file_path):
         """
         Проверка формата аудиофайла на поддержку.
+        Если формат не поддерживается, пытается конвертировать в поддерживаемый формат.
         
         Args:
             audio_file_path (str): Путь к аудиофайлу.
             
         Returns:
-            str: Название формата для Yandex SpeechKit.
+            tuple: (формат для Yandex SpeechKit, путь к файлу (может быть новым, если была конвертация))
             
         Raises:
-            ValueError: Если формат не поддерживается.
+            ValueError: Если формат не поддерживается и конвертация не удалась.
         """
         file_extension = os.path.splitext(audio_file_path)[1].lower().lstrip('.')
         
-        if file_extension not in cls.FORMAT_MAPPING:
-            raise ValueError(f"Неподдерживаемый формат аудио: {file_extension}. Поддерживаемые форматы: WAV (LPCM), MP3, OGG/OPUS.")
+        # Если формат поддерживается, возвращаем его и исходный путь
+        if file_extension in cls.FORMAT_MAPPING:
+            return cls.FORMAT_MAPPING[file_extension], audio_file_path
         
-        return cls.FORMAT_MAPPING[file_extension]
+        # Если формат не поддерживается, пытаемся конвертировать
+        print(f"Неподдерживаемый формат аудио: {file_extension}. Пытаемся конвертировать в поддерживаемый формат.")
+        converted_path, format_name = cls.convert_to_supported_format(audio_file_path)
+        
+        return format_name, converted_path
+    
+    @classmethod
+    def convert_to_supported_format(cls, audio_file_path, target_format=None):
+        """
+        Конвертирует аудиофайл в поддерживаемый формат.
+        
+        Args:
+            audio_file_path (str): Путь к аудиофайлу.
+            target_format (str, optional): Целевой формат ('lpcm' или 'oggopus'). 
+                                          По умолчанию используется DEFAULT_TARGET_FORMAT.
+            
+        Returns:
+            tuple: (путь к конвертированному файлу, название формата для Yandex SpeechKit)
+            
+        Raises:
+            ValueError: Если конвертация не удалась.
+        """
+        # Определяем целевой формат
+        target_format = target_format or cls.DEFAULT_TARGET_FORMAT
+        if target_format not in cls.SUPPORTED_FORMATS:
+            target_format = cls.DEFAULT_TARGET_FORMAT
+        
+        # Определяем расширение для выходного файла
+        output_extension = 'wav' if target_format == 'lpcm' else 'ogg'
+        
+        # Создаем временный файл для конвертированного аудио
+        temp_dir = tempfile.gettempdir()
+        base_filename = os.path.basename(audio_file_path)
+        filename_without_ext = os.path.splitext(base_filename)[0]
+        converted_path = os.path.join(temp_dir, f"{filename_without_ext}.{output_extension}")
+        
+        # Конвертируем файл
+        success = cls.convert_audio(
+            audio_file_path,
+            converted_path,
+            format_name=target_format,
+            sample_rate=16000
+        )
+        
+        if not success:
+            raise ValueError(f"Не удалось конвертировать аудиофайл {audio_file_path} в формат {target_format}")
+        
+        return converted_path, target_format
     
     @classmethod
     def get_audio_duration(cls, audio_path):
@@ -198,18 +248,7 @@ class AudioProcessor:
         ffmpeg_format = cls.FFMPEG_FORMAT_MAPPING.get(format_name, 'wav')
         
         # Настройки сжатия в зависимости от формата
-        if format_name == 'mp3':
-            # Для MP3 используем пониженный битрейт
-            cmd = [
-                'ffmpeg',
-                '-i', input_path,
-                '-ar', '16000',  # Пониженная частота дискретизации
-                '-ac', '1',      # Моно
-                '-b:a', '32k',   # Пониженный битрейт
-                '-f', ffmpeg_format,
-                output_path
-            ]
-        elif format_name == 'oggopus':
+        if format_name == 'oggopus':
             # Для Opus используем пониженный битрейт
             cmd = [
                 'ffmpeg',
