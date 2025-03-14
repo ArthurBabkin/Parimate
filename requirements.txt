@@ -1,8 +1,11 @@
 python-telegram-bot==13.7
 fastapi
 deepface
-requests
+requests>=2.26.0
 speechkit
-python-dotenv
+python-dotenv>=0.19.0
 protobuf==3.20.0
 ffmpeg
+Levenshtein>=0.12.2
+scikit-learn>=0.24.2
+fuzzywuzzy>=0.18.0
