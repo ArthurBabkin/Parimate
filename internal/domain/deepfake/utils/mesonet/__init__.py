@@ -1,1 +1,1 @@
-from .classifiers import Meso4
+from .classifiers import Meso4, MesoInception4

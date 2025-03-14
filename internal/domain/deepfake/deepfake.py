@@ -462,7 +462,7 @@ class DeepFake:
         self.df2 = DeepFakeEyeIris(cfg)
         self.df3 = DeepFakeNN(cfg)
 
-    def check_video(self, video_path: str) -> str:
+    def check_video(self, video_path: str, nn_analyze: bool = False) -> str:
         report = self.df1.analyze_video_metadata(video_path)
 
         if 'error' in report:
@@ -484,9 +484,14 @@ class DeepFake:
             if iou_m < 0.2:
                 return 'fake'
 
-        deepfake_conf = self.df3.analyze_video(frames)
+        if nn_analyze:
+            deepfake_conf = self.df3.analyze_video(frames)
+            print(deepfake_conf)
+            deepfake_conf = (deepfake_conf > self.cfg.nn_detection.threshold_conf)
+            conf = sum(deepfake_conf) / len(deepfake_conf)
+            print(conf)
 
-        if sum(deepfake_conf) / len(deepfake_conf) < self.cfg.nn_detection.threshold_conf:
-            return 'fake'
+            if conf < 0.5:
+                return 'fake'
 
         return 'correct'

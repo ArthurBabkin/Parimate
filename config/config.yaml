@@ -15,7 +15,7 @@ deepfake:
     threshold_scale_right: 1.2
     threshold_iou: 0.6
   nn_detection:
-    threshold_conf: 0.8
+    threshold_conf: 0.7
     mesonet_path: './internal/domain/deepfake/utils/mesonet/weights/Meso4_DF.h5'
   step: 1
 face_analysis:
