@@ -14,7 +14,7 @@ class FaceAnalysis:
     def extract_embedding(self, image: np.ndarray) -> list[float]:
         """Extracts face embedding from an image."""
         embeddings = DeepFace.represent(
-            image, detector_backend=self.detector, model_name=self.model_name
+            image, detector_backend=self.detector, model_name=self.model_name, enforce_detection=False
         )
         if len(embeddings) != 1:
             raise ValueError(
@@ -31,7 +31,7 @@ class FaceAnalysis:
         """Verifies if two face images belong to the same person."""
         result = DeepFace.verify(
             image, reference, detector_backend=self.detector,
-            model_name=self.model_name, silent=True
+            model_name=self.model_name, silent=True, enforce_detection=False
         )
         return result.get('verified', False)
 

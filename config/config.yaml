@@ -19,5 +19,5 @@ deepfake:
     mesonet_path: './internal/domain/deepfake/utils/mesonet/weights/Meso4_DF.h5'
   step: 1
 face_analysis:
-  detector: "opencv"
+  detector: "retinaface"
   model_name: "Facenet"
