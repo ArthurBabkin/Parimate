@@ -9,7 +9,7 @@ try:
 except ImportError:
     # Если относительные импорты не работают, используем абсолютные
     import sys
-    
+
     # Добавляем родительскую директорию в путь импорта
     parent_dir = str(Path(__file__).parent.parent)
     if parent_dir not in sys.path:
@@ -17,10 +17,11 @@ except ImportError:
     
     from speech_model import YandexSpeechKit
 
-from Levenshtein import distance 
+from fuzzywuzzy import fuzz
+from Levenshtein import distance
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import jaccard_score
-from fuzzywuzzy import fuzz
+
 
 class NLP_analysis:
     LEVENSHTEIN_THRESHOLD = 3

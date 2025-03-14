@@ -1,15 +1,16 @@
 import os
+import subprocess
 import sys
+import tempfile
 import time
+
+import cv2
 import numpy as np
+import open_clip
+import requests
 import torch
 from open_clip import tokenizer
-import open_clip
 from PIL import Image
-import cv2
-import tempfile
-import subprocess
-import requests
 from speech_model.model import YandexSpeechKit
 
 

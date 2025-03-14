@@ -1,5 +1,6 @@
 import requests
 
+
 class SpeechRecognizer:
     """
     Класс для распознавания речи с использованием Yandex SpeechKit API.

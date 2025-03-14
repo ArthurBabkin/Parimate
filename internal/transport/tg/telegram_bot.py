@@ -4,7 +4,7 @@ import random
 from omegaconf import DictConfig
 from telegram import Update
 from telegram.ext import (ApplicationBuilder, CommandHandler, ContextTypes,
-                          MessageHandler, filters, ConversationHandler)
+                          ConversationHandler, MessageHandler, filters)
 
 from internal.domain.service import ParimateSerive
 

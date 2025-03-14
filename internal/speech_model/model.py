@@ -1,5 +1,6 @@
 import os
 import tempfile
+
 from dotenv import load_dotenv
 
 # Пытаемся использовать относительные импорты, если файл импортируется как часть пакета
@@ -11,7 +12,7 @@ except ImportError:
     # Это позволяет запускать файл напрямую
     import sys
     from pathlib import Path
-    
+
     # Добавляем родительскую директорию в путь импорта
     parent_dir = str(Path(__file__).parent.parent)
     if parent_dir not in sys.path:

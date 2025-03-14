@@ -7,8 +7,9 @@ parent_dir = str(Path(__file__).parent)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-from speech_model import YandexSpeechKit
 from nlp_model.nlp_processor import NLP_analysis
+from speech_model import YandexSpeechKit
+
 
 class SpeechValidator:
     """
