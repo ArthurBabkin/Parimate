@@ -1,29 +1,24 @@
-import cv2
-import base64
 import numpy as np
 from deepface import DeepFace
 
-def convert_base64_to_np(img_b64):
-    return cv2.imdecode(np.frombuffer(base64.b64decode(img_b64), dtype=np.uint8), -1)
+class FaceAnalysis:
+    def __init__(self, detector: str = "opencv", model_name: str = "Facenet"):
+        self.detector = detector
+        self.model_name = model_name
 
-def extract_embedding(image):
-    embs = DeepFace.represent(convert_base64_to_np(image))
+    def extract_embedding(self, image: np.ndarray) -> np.ndarray:
+        """Extracts face embedding from an image."""
+        embeddings = DeepFace.represent(
+            image, detector_backend=self.detector, model_name=self.model_name
+        )
+        if len(embeddings) != 1:
+            raise ValueError("There should be exactly one face in the reference image.")
+        return embeddings[0]['embedding']
 
-    if len(embs) != 1:
-        raise ValueError("There should be 1 face on the reference image")
+    def verify_face(self, image: np.ndarray, reference: np.ndarray) -> bool:
+        """Verifies if two face images belong to the same person."""
+        result = DeepFace.verify(
+            image, reference, detector_backend=self.detector, model_name=self.model_name, silent=True
+        )
+        return result.get('verified', False)
 
-    return embs[0]['embedding']
-
-
-def check_face(image, reference):
-    """image - new photo
-    reference - reference embedding/photo
-
-    Args:
-        image (np.array): new photo
-        reference (np.array): reference embedding/photo
-    """
-    result = DeepFace.verify(
-        image, reference
-    )
-    return result['verified']

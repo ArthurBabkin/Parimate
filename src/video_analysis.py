@@ -36,10 +36,8 @@ def load_vlm_model(model_type="llava-hf/llava-v1.6-mistral-7b-hf", device="cuda"
         bnb_4bit_quant_type="nf4",
     )
 
-    # Load processor
     processor = LlavaNextProcessor.from_pretrained(model_type)
 
-    # Load model with int4 quantization
     model = LlavaNextForConditionalGeneration.from_pretrained(
         model_type,
         quantization_config=bnb_config,
