@@ -1,3 +1,4 @@
 python-telegram-bot==13.7
-deepface
-numpy
+deepface==0.0.93
+numpy==1.26.2
+opencv-python==4.11.0.86
