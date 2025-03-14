@@ -74,12 +74,6 @@ class DeepFakeMetadata:
         """
         check_name = "_check_software"
 
-        editors = [
-            'Adobe', 'Premiere', 'Final Cut', 'DaVinci',
-            'Blender', 'After Effects', 'Fusion', 'CyberLink',
-            'DeepFaceLab', 'FakeApp', 'FaceSwap'
-        ]
-
         software_fields = {
             'Software': 'Software',
             'EncodingTool': 'Encoding Tool',
@@ -125,16 +119,15 @@ class DeepFakeMetadata:
                     for fmt in date_formats:
                         try:
                             create_date = datetime.strptime(
-                                metadata[create_field].split('.')[0], fmt)
+                                metadata[create_field].split('')[0], fmt)
                             modify_date = datetime.strptime(
                                 metadata[modify_field].split('.')[0], fmt)
-                            break
                         except ValueError:
                             continue
 
-                    if modify_date > create_date:
-                        report[check_name].append(
-                            f"{modify_date} {create_date}")
+                    if modify_date != create_date:
+                        report[check_name].append(f"{modify_date} "
+                                                  f"{create_date}")
                 except Exception:
                     pass
 
@@ -164,8 +157,8 @@ class DeepFakeMetadata:
         for main_field in ['Duration', 'MediaDuration']:
             for compare_field in ['TrackDuration', 'AudioDuration']:
                 if main_field in durations and compare_field in durations:
-                    delta_dur = abs(
-                        durations[main_field] - durations[compare_field])
+                    delta_dur = abs(durations[main_field] -
+                                    durations[compare_field])
                     if delta_dur > threshold:
                         report[check_name].append(
                             f"{main_field}={durations[main_field]} vs "
@@ -220,8 +213,21 @@ class DeepFakeMetadata:
 
         field = 'Comment'
 
+        editors = [
+            'Adobe', 'Premiere', 'Final Cut', 'DaVinci',
+            'Blender', 'After Effects', 'Fusion', 'CyberLink',
+            'DeepFaceLab', 'FakeApp', 'FaceSwap'
+        ]
+        change = ['Edited', 'Trimmed', 'Cropped', 'Color Graded', 'Stabilized',
+                  'Transitions Added', 'Effects Applied', 'Audio Enhanced',
+                  'Subtitles Added', 'Watermark Applied', 'Mixed', 'DeepFake',
+                  'Fake', 'Edit', 'Adjustment'
+                  ]
+
+        comment_words = [*editors, *change]
+
         if value := metadata.get(field):
-            if 'adjustment' in value.lower() or 'edit' in value.lower():
+            if any([word.lower() in value.lower() for word in comment_words]):
                 report[check_name].append(str(value))
 
     def _check_model_device(self, report: Dict[str, List],
