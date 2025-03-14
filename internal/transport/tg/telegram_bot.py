@@ -1,11 +1,14 @@
+import os
 import random
 
 from omegaconf import DictConfig
 from telegram import Update
 from telegram.ext import (ApplicationBuilder, CommandHandler, ContextTypes,
-                          MessageHandler, filters)
+                          MessageHandler, filters, ConversationHandler)
 
 from internal.domain.service import ParimateSerive
+
+WAITING_FOR_VIDEO = 1
 
 
 class ParimateBot:
@@ -42,12 +45,11 @@ class ParimateBot:
 
     async def handle_photo_request(self, update, context):
         if not update.message.photo:
-            await update.message.reply_text(
-                "Send me a photo of your face 😀😀😀😀😀😀😀")
+            await update.message.reply_text("Send me a photo of your face 😀")
             return
         user_id = update.message.from_user.id
         file_id = update.message.photo[-1].file_id
-        # Convert image to embeddings
+
         image_base64 = await context.application.bot.get_file(file_id)
         embeddings = self.convert_to_embeddings(image_base64)
         try:
@@ -64,10 +66,58 @@ class ParimateBot:
         await update.message.reply_text(
             f"Task {task_name} created successfully!")
 
+    async def handle_done_task(self, update: Update,
+                               context: ContextTypes.DEFAULT_TYPE):
+        await update.message.reply_text("Пожалуйста, отправьте видео "
+                                        "для обработки.")
+        return WAITING_FOR_VIDEO
+
+    async def handle_video(self, update: Update,
+                           context: ContextTypes.DEFAULT_TYPE):
+        if not update.message.video:
+            await update.message.reply_text("Это не видео. "
+                                            "Пожалуйста, отправьте видео.")
+            return WAITING_FOR_VIDEO
+
+        user_id = update.message.from_user.id
+        file_id = update.message.video.file_id
+
+        try:
+            video_file = await context.bot.get_file(file_id)
+            video_path = await video_file.download_to_drive()
+
+            result = self.service.done_task(user_id, video_path)
+
+            result = f"Видео успешно обработано! Video result: {result}"
+
+            await update.message.reply_text(result)
+
+        except Exception as e:
+            print(f"Ошибка при обработке видео: {e}")
+            await update.message.reply_text("Произошла ошибка при обработке "
+                                            "видео. Пожалуйста, попробуйте "
+                                            "снова.")
+
+        return ConversationHandler.END  # Завершаем диалог
+
+    async def cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await update.message.reply_text("Действие отменено.")
+        return ConversationHandler.END
+
     def register_handlers(self):
-        self.app.add_handler(CommandHandler("start", self.handle_start))
-        self.app.add_handler(
-            CommandHandler("create_task", self.handle_create_task))
+        conv_handler = ConversationHandler(
+            entry_points=[CommandHandler("done_task", self.handle_done_task)],
+            states={
+                WAITING_FOR_VIDEO: [
+                    MessageHandler(filters.VIDEO, self.handle_video)],
+            },
+            fallbacks=[CommandHandler("cancel", self.cancel)],
+        )
+        self.app.add_handler(CommandHandler("start",
+                                            self.handle_start))
+        self.app.add_handler(conv_handler)
+        self.app.add_handler(CommandHandler("create_task",
+                                            self.handle_create_task))
 
     def run(self):
         self.register_handlers()
