@@ -1,8 +1,10 @@
 import base64
+
 import cv2
 import numpy as np
 from deepface import DeepFace
 from omegaconf import DictConfig
+
 
 class FaceAnalysis:
     def __init__(self, cfg: DictConfig):

@@ -1,5 +1,6 @@
-from omegaconf import DictConfig
 import os
+
+from omegaconf import DictConfig
 
 from internal.adapter.database.sql import UserAdapter, UserPhotoAdapter
 from internal.domain.deepfake import DeepFake
