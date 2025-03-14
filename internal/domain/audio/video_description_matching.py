@@ -1,6 +1,5 @@
 import os
 import subprocess
-import sys
 import tempfile
 import time
 
@@ -11,7 +10,7 @@ import requests
 import torch
 from open_clip import tokenizer
 from PIL import Image
-from speech_model.model import YandexSpeechKit
+from internal.domain.audio.speech_model.model import YandexSpeechKit
 
 
 class VideoDescriptionMatcher:
