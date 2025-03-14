@@ -138,7 +138,7 @@ class AudioProcessor:
         Returns:
             str: Путь к обработанному аудиофайлу.
         """
-        max_duration = 29
+        max_duration = 29.9
         if duration > max_duration:
             print(f"Аудио длительностью {duration:.2f} секунд, обрезаем до {max_duration} секунд")
             cls.convert_audio(
