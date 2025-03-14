@@ -1,4 +1,4 @@
-# Файл для определения наличия слова в тексте, используя FuzzySearch (fuzzywuzzy)
+# Файл для определения наличия слова в тексте, используя FuzzySearch (fuzzywuzzy) и Jaccard Similarity Score
 
 import os
 from pathlib import Path
@@ -24,8 +24,8 @@ from fuzzywuzzy import fuzz
 
 class NLP_analysis:
     LEVENSHTEIN_THRESHOLD = 3
-    JACCARD_THRESHOLD = 0.5
-    FUZZY_THRESHOLD = 50
+    JACCARD_THRESHOLD = 0.2
+    FUZZY_THRESHOLD = 55
 
     def __init__(self):
         pass
@@ -70,9 +70,22 @@ class NLP_analysis:
         if not words:
             raise ValueError("No text recieved.")
         
-        fuzzy_matches = [self.is_within_fuzzywuzzy_score(target_word, word) for word in words]
+        matches = [self.is_within_fuzzywuzzy_score(target_word, word) for word in words]
         
-        if True in fuzzy_matches:
+        for i in range(len(words)):
+            matches[i] = False 
+            
+            if self.is_within_fuzzywuzzy_score(target_word, words[i]) and self.is_within_jaccard_score(target_word, words[i]):
+                matches[i] = True
+            
+
+        print("РОНАЛДУУУ")
+        for i in range(len(words)):
+            if matches[i]:
+                print(words[i])
+                print(self.get_jaccard_similarity(target_word, words[i]))
+
+        if True in matches:
             return True
         
         return False
