@@ -14,7 +14,7 @@ class App:
 
         deepfake = DeepFake(self.cfg.deepfake)
         sv = SpeechValidator()
-        vd = VideoDescriptionMatcher(self.cfg.video_description)
+        vd = VideoDescriptionMatcher()
 
         conn = get_connection(self.cfg.database.path)
         init_database(conn, self.cfg.database.path_init)
