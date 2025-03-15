@@ -28,6 +28,9 @@ class ParimateSerive:
     def _verify_video_metadata(self, video_path: str):
         return self.df.check_video(video_path)
     
+    def _verify_face(self, img, emb):
+        return self.fa.verify_face(img, emb)
+    
     def create_task(self, user_id: int, name: str, description: str, phrase: str):
         
         self.tasks.append({
@@ -43,6 +46,10 @@ class ParimateSerive:
         # Check metadata
         v = self._verify_video_metadata(video_path)
 
+        # emb = get embedding from db by user_id
+        # img = frame from the video
+        face_check = self._verify_face(emb, img)
+
         # Check audio for key word
         task = [t for t in self.tasks if t["name"] == task_name][0]
         audio_check = self.sv.validate_pronunciation(video_path, task["phrase"])
@@ -53,6 +60,7 @@ class ParimateSerive:
         os.remove(video_path)
 
         return v
+    
     def get_tasks(self, user_id: int):
         return self.tasks
     
