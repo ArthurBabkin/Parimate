@@ -14,6 +14,7 @@ class ParimateSerive:
                  user_adapter: UserAdapter,
                  user_photo_adapter: UserPhotoAdapter):
         self.cfg = cfg
+        self.fa = FaceAnalysis(cfg.face_analysis)
         self.df = df
         self.sv = sv
         self.vd = vd
@@ -56,5 +57,4 @@ class ParimateSerive:
         return self.tasks
     
     def get_embedings(self, image_base64: str):
-       faceAnalysis = FaceAnalysis(self.cfg)
-       return faceAnalysis.extract_embedding_b64(image_base64)
+       return self.fa.extract_embedding_b64(image_base64)
